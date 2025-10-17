@@ -1,6 +1,11 @@
-#### Sequence diagram
+# Sequence diagram
+
 ![](sequence-diagram.png)
-Class Diagram
+
+# Class Diagram
+
 ![](class-diagram.png)
-#### Flowchart
+
+# Flowchart
+
 ![](flowchart-diagram.png)
