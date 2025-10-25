@@ -1,6 +1,6 @@
 # Sequence diagram
 
-![](sequence-diagram-new.png)
+![](sequence-diagram.png)
 
 # Class Diagram
 
