@@ -1,11 +1,11 @@
 # Sequence diagram
 
-![](sequence-diagram.png)
+![](diagram/sequence-diagram.png)
 
 # Class Diagram
 
-![](class-diagram.png)
+![](diagram/class-diagram.png)
 
 # Flowchart
 
-![](flowchart-diagram.png)
+![](diagram/flowchart-diagram.png)
