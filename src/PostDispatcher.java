@@ -1,22 +1,30 @@
 public class PostDispatcher {
     private final RequestBuffer requestBuffer;
+    private final Simulation simulation;
     private int rejectedRequestsCount = 0;
     private int requestsCount = 0;
 
-    public PostDispatcher(RequestBuffer buffer) {
-        requestBuffer = buffer;
+    public PostDispatcher(RequestBuffer buffer, Simulation simulation) {
+        this.requestBuffer = buffer;
+        this.simulation = simulation;
     }
 
     public void processRequest(Request request) {
-        System.out.println("Received " + request);
         requestsCount++;
-        // Request rejection if adding wasn't successful
-        if(!requestBuffer.addRequest(request)) {
-            System.out.println("Rejected " + request);
+        
+        if(requestBuffer.addRequest(request)) {
+            simulation.scheduleEvent(new SystemEvent(simulation.getCurrentTime(), EventType.TASK_UNBUFFER, -1));
+        } else {
             rejectedRequestsCount++;
             Request oldestRequest = requestBuffer.findOldest();
+
             requestBuffer.removeRequest(oldestRequest);
             requestBuffer.addRequest(request);
+            
+            System.out.printf("[%.1f] Dispatcher REJECTED %s (Replaced by %s)\n", 
+                               simulation.getCurrentTime(), oldestRequest, request);
+
+            simulation.scheduleEvent(new SystemEvent(simulation.getCurrentTime(), EventType.TASK_UNBUFFER, -1));
         }
     }
 

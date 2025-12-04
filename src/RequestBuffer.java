@@ -18,13 +18,17 @@ public class RequestBuffer {
     }
 
     public Request findOldest() {
-        // 100% sure that buffer has no null values, and we can skip filtering nulls
-        return Collections.min(requests, Comparator.comparingDouble(Request::getGenerationTime));
+        return requests.stream()
+                .filter(Objects::nonNull)
+                .min(Comparator.comparingDouble(Request::getGenerationTime))
+                .orElse(null);
     }
 
     public Request getLastRequest() {
-        // Filtering null values to avoid NullPointerException
-        return Collections.max(requests.stream().filter(Objects::nonNull).toList(), Comparator.comparingDouble(Request::getGenerationTime));
+        return requests.stream()
+                .filter(Objects::nonNull)
+                .max(Comparator.comparingDouble(Request::getGenerationTime)) 
+                .orElse(null);
     }
 
     public boolean addRequest(Request request) {
@@ -40,7 +44,6 @@ public class RequestBuffer {
             }
         }
 
-        // Place request on free slot if that exists
         if (freeSlotIndex != -1) {
             requests.set(freeSlotIndex, request);
             pointer = (freeSlotIndex + 1) % capacity;
@@ -50,7 +53,9 @@ public class RequestBuffer {
     }
 
     public void removeRequest(Request request) {
-        requests.set(requests.indexOf(request), null);
+        if (request != null && requests.contains(request)) {
+            requests.set(requests.indexOf(request), null);
+        }
     }
 
     public boolean isEmpty() {
@@ -60,7 +65,8 @@ public class RequestBuffer {
     public void printBuffer() {
         System.out.println("Buffer: ");
         for (int i = 0; i < capacity; i++) {
-            System.out.printf("%s. %s %s\n", i, requests.get(i), (pointer == i) ? "<----" : "");
+            String content = (requests.get(i) != null) ? requests.get(i).toString() : "NULL";
+            System.out.printf("  %s. %s %s\n", i, content, (pointer == i) ? "<---- Next Free" : "");
         }
     }
 }

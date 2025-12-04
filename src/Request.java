@@ -6,6 +6,9 @@ public class Request {
     private final int sourceId;
     private final double generationTime;
 
+    private double startedProcessingTime = 0.0;
+    private double finishedProcessingTime = 0.0;
+
     public Request(double now, int sourceId) {
         id = count.incrementAndGet();
         generationTime = now;
@@ -14,6 +17,29 @@ public class Request {
 
     public double getGenerationTime() {
         return generationTime;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public int getSourceId() {
+        return sourceId;
+    }
+
+    public void setStartedProcessingTime(double startedProcessingTime) {
+        this.startedProcessingTime = startedProcessingTime;
+    }
+
+    public void setFinishedProcessingTime(double finishedProcessingTime) {
+        this.finishedProcessingTime = finishedProcessingTime;
+    }
+    
+    public double getTotalTime() {
+        if (finishedProcessingTime > 0) {
+            return finishedProcessingTime - generationTime;
+        }
+        return 0.0;
     }
 
     @Override
