@@ -4,46 +4,41 @@ public class Request {
     private static final AtomicInteger count = new AtomicInteger(0);
     private final int id;
     private final int sourceId;
-    private final double generationTime;
+    private final int generationTime;
 
-    private double startedProcessingTime = 0.0;
-    private double finishedProcessingTime = 0.0;
+    private int startedProcessingTime = 0;
+    private int finishedProcessingTime = 0;
 
-    public Request(double now, int sourceId) {
+    public Request(int now, int sourceId) {
         id = count.incrementAndGet();
         generationTime = now;
         this.sourceId = sourceId;
     }
 
-    public double getGenerationTime() {
-        return generationTime;
+    public int getGenerationTime() { return generationTime; }
+    public int getId() { return id; }
+    public int getSourceId() { return sourceId; }
+
+    public void setStartedProcessingTime(int t) { this.startedProcessingTime = t; }
+    public void setFinishedProcessingTime(int t) { this.finishedProcessingTime = t; }
+
+    public int getWaitTime() {
+        if (startedProcessingTime > 0) return startedProcessingTime - generationTime;
+        return 0;
     }
 
-    public int getId() {
-        return id;
+    public int getServiceTime() {
+        if (finishedProcessingTime > 0) return finishedProcessingTime - startedProcessingTime;
+        return 0;
     }
 
-    public int getSourceId() {
-        return sourceId;
-    }
-
-    public void setStartedProcessingTime(double startedProcessingTime) {
-        this.startedProcessingTime = startedProcessingTime;
-    }
-
-    public void setFinishedProcessingTime(double finishedProcessingTime) {
-        this.finishedProcessingTime = finishedProcessingTime;
-    }
-    
-    public double getTotalTime() {
-        if (finishedProcessingTime > 0) {
-            return finishedProcessingTime - generationTime;
-        }
-        return 0.0;
+    public int getTotalTime() {
+        if (finishedProcessingTime > 0) return finishedProcessingTime - generationTime;
+        return 0;
     }
 
     @Override
     public String toString() {
-        return String.format("Request-%d from S-%d at %.1f units", id, sourceId, generationTime);
+        return String.format("Request-%d from S-%d at %d units", id, sourceId, generationTime);
     }
 }

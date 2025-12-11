@@ -1,3 +1,4 @@
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class AnalyticProcessor {
@@ -5,54 +6,59 @@ public class AnalyticProcessor {
     private final int id;
     private boolean isBusy = false;
     private Request currentRequest = null;
-    private final Generator timeGen;
-    private final Simulation simulation; 
+    private final Simulation simulation;
+    private final double lambda;
+    private final Statistics statistics;
+    private final Random random;
 
-    public AnalyticProcessor(Simulation simulation, double lambda) {
+    public AnalyticProcessor(Simulation simulation, Statistics statistics, double lambda) {
         this.simulation = simulation;
-        id = count.incrementAndGet();
-        timeGen = new Generator(lambda);
-    }
-
-    public int getId() {
-        return id;
+        this.statistics = statistics;
+        this.lambda = lambda;
+        this.id = count.incrementAndGet();
+        this.random = new Random();
     }
 
     public boolean isFree() {
         return !isBusy;
     }
 
-    public void startProcessing(Request request, double now) {
+    public void startProcessing(Request request, int now) {
         if (!isBusy) {
             currentRequest = request;
             isBusy = true;
             
             request.setStartedProcessingTime(now);
             
-            double serviceTime = timeGen.nextExponential();
-            double timeToFinish = now + serviceTime;
+            int serviceTime = generateServiceTime();
+            int timeToFinish = now + serviceTime;
             
-            System.out.printf("[%.1f] Processor-%d START: %s (Service: %.1f) -> Finish at %.1f\n", 
+            System.out.printf("[%d] Processor-%d START: %s (Service: %d) -> Finish at %d\n",
                                now, id, currentRequest, serviceTime, timeToFinish);
 
             simulation.scheduleEvent(new SystemEvent(timeToFinish, EventType.TASK_COMPLETED, id));
         }
     }
 
-    public Request completeProcessing(double now) {
-        if (currentRequest == null) return null;
-        
+    public void completeProcessing(int now) {
+        if (currentRequest == null) return;
+
         currentRequest.setFinishedProcessingTime(now);
-        System.out.printf("[%.1f] Processor-%d END: %s (Total Time: %.1f)\n", 
-                           now, id, currentRequest, currentRequest.getTotalTime());
-        
-        Request completedRequest = currentRequest;
+
+        statistics.recordCompleted(currentRequest, id);
+
+        System.out.printf("[%d] Processor-%d END: %s (Total Time: %d)\n",
+                now, id, currentRequest, currentRequest.getTotalTime());
+
         currentRequest = null;
         isBusy = false;
 
         simulation.scheduleEvent(new SystemEvent(now, EventType.TASK_UNBUFFER, -1));
-        
-        return completedRequest;
+    }
+
+    int generateServiceTime() {
+        double expTime =  Math.log(1 - random.nextDouble()) / (-lambda);
+        return Math.max(1, (int) expTime);
     }
     
     @Override

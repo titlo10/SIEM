@@ -1,13 +1,12 @@
 import java.util.ArrayList;
 import java.util.PriorityQueue;
+import java.lang.Math;
 
 public class Simulation {
     private final PriorityQueue<SystemEvent> eventSet;
-    private double currentTime = 0.0;
-    private final double maxTime = 50.0;
-
+    private int currentTime = 0;
+    private final Statistics statistics;
     private final RequestBuffer buffer;
-    private final PostDispatcher postDisp;
     private final SelectDispatcher selectDisp;
     private final ArrayList<AnalyticProcessor> processors;
     private final ArrayList<Source> sources;
@@ -15,29 +14,31 @@ public class Simulation {
     // Constants
     private static final int BUFFER_CAPACITY = 5;
     private static final int NUM_PROCESSORS = 4;
-    private static final int NUM_SOURCES = 3;
-    private static final double SOURCE_LAMBDA = 0.5;
-    private static final double PROCESSOR_LAMBDA = 0.25;
+    private static final int MIN_INTERVAL = 0;
+    private static final int MAX_INTERVAL = 10;
+    private static final int NUM_SOURCES = 20;
+    private static final double LAMBDA = 1.0;
 
     public Simulation() {
         eventSet = new PriorityQueue<>();
+        statistics = new Statistics(NUM_SOURCES, NUM_PROCESSORS);
         buffer = new RequestBuffer(BUFFER_CAPACITY);
         processors = new ArrayList<>();
-        
+
         for(int i = 0; i < NUM_PROCESSORS; i++){
-            processors.add(new AnalyticProcessor(this, PROCESSOR_LAMBDA));
+            processors.add(new AnalyticProcessor(this, statistics, LAMBDA));
         }
-        
-        postDisp = new PostDispatcher(buffer, this);
+
+        PostDispatcher postDisp = new PostDispatcher(buffer, this, statistics);
         sources = new ArrayList<>();
         for(int i = 0; i < NUM_SOURCES; i++){
-            sources.add(new Source(this, postDisp, SOURCE_LAMBDA));
+            sources.add(new Source(this, postDisp, MIN_INTERVAL, MAX_INTERVAL));
         }
         
-        selectDisp = new SelectDispatcher(buffer, processors, this);
+        selectDisp = new SelectDispatcher(buffer, processors);
     }
 
-    public double getCurrentTime() {
+    public int getCurrentTime() {
         return currentTime;
     }
 
@@ -52,16 +53,10 @@ public class Simulation {
         }
         
         SystemEvent currentEvent = eventSet.poll();
-
-        if (currentEvent.eventTime() >= maxTime) {
-            currentTime = maxTime; 
-            return false;
-        }
-
         currentTime = currentEvent.eventTime();
         
         System.out.println("\n==================================================");
-        System.out.printf(">>> TIME ADVANCED TO T=%.1f\n", currentTime);
+        System.out.printf(">>> TIME ADVANCED TO T=%d\n", currentTime);
         System.out.printf(">>> PROCESSING EVENT: %s (Device ID: %d)\n", 
                           currentEvent.eventType(), currentEvent.assignedDeviceId());
         System.out.println("==================================================");
@@ -73,9 +68,32 @@ public class Simulation {
     }
 
     public void runAutoMode() {
-        while (goToNextEvent());
-        System.out.println("--- Simulation Finished at Time: " + currentTime + " ---");
-        printFinalStatistics();
+        double tAlpha = 1.643;
+        double accuracy = 0.1;
+        int minTransactions = 200;
+
+        System.out.println("Starting Auto Mode (Target Accuracy: 10%, Confidence: 90%)...");
+
+        while (statistics.getTotalTransactions() < minTransactions) {
+            if (!goToNextEvent()) break;
+        }
+
+        while (true) {
+            double p = statistics.getRejectionRate();
+            if (p == 0) p = 0.001;
+
+            double requiredTransactions = (Math.pow(tAlpha, 2) * (1 - p)) / (p * Math.pow(accuracy, 2));
+
+            if (statistics.getTotalTransactions() >= requiredTransactions) {
+                System.out.printf("\n*** CRITERIA MET ***\nStopping condition met: N_current=%d >= N_required=%.0f (P_rej=%.4f)\n",
+                        statistics.getTotalTransactions(), requiredTransactions, p);
+                break;
+            }
+
+            if (!goToNextEvent()) break;
+        }
+
+        statistics.printFinalTable(currentTime);
     }
     
     private void handleEvent(SystemEvent event) {
@@ -99,22 +117,9 @@ public class Simulation {
     }
 
     private void printStatus() {
-        System.out.printf("\n--- SYSTEM STATE at T=%.1f ---\n", currentTime);
+        System.out.printf("\n--- SYSTEM STATE at T=%d ---\n", currentTime);
         buffer.printBuffer();
         selectDisp.printProcessors();
-        System.out.printf("Next Event at T=%.1f\n", eventSet.isEmpty() ? -1.0 : eventSet.peek().eventTime());
-    }
-
-    public void printFinalStatistics() {
-        int totalRequests = postDisp.getRequestsCount();
-        int rejectedRequests = postDisp.getRejectedRequestsCount();
-        
-        System.out.println("\n*** Final Statistics ***");
-        System.out.printf("Total time: %.1f\n", currentTime);
-        System.out.println("Total requests generated: " + totalRequests);
-        System.out.println("Total requests rejected: " + rejectedRequests);
-        
-        double rejectedPercent = (totalRequests == 0) ? 0.0 : ((double)rejectedRequests / totalRequests * 100.0);
-        System.out.printf("Rejected percent: %.2f%%\n", rejectedPercent);
+        System.out.printf("Next Event at T=%d\n", eventSet.isEmpty() ? -1 : eventSet.peek().eventTime());
     }
 }

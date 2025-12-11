@@ -4,15 +4,13 @@ public class SelectDispatcher {
     private final RequestBuffer requestBuffer;
     private final ArrayList<AnalyticProcessor> processors;
     private int pointer = 0;
-    private final Simulation simulation;
 
-    public SelectDispatcher(RequestBuffer buffer, ArrayList<AnalyticProcessor> processors, Simulation simulation) {
+    public SelectDispatcher(RequestBuffer buffer, ArrayList<AnalyticProcessor> processors) {
         this.requestBuffer = buffer;
         this.processors = processors;
-        this.simulation = simulation;
     }
 
-    public void process(double now) {
+    public void process(int now) {
         AnalyticProcessor processor;
 
         while (!requestBuffer.isEmpty() && (processor = chooseProcessor()) != null) {
