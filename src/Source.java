@@ -33,8 +33,10 @@ public class Source {
     public void generateRequest(int now) {
         Request newRequest = new Request(now, id);
         postDisp.processRequest(newRequest);
-        
-        System.out.printf("[%d] Source-%d GENERATED %s\n", now, id, newRequest);
+
+        if(!Main.isAutoMode) {
+            System.out.printf("[%d] Source-%d GENERATED %s\n", now, id, newRequest);
+        }
 
         scheduleNextGeneration(now);
     }

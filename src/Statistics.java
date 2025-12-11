@@ -65,7 +65,8 @@ public class Statistics {
         System.out.printf("%-12s %-8s %-8s %-10s %-10s %-10s %-10s %-10s %-10s\n",
                 "Source", "Gen", "Rej", "P_rej(%)", "T_sys", "T_wait", "T_serv", "D_wait", "D_serv");
         System.out.println("-".repeat(100));
-
+        double avgSysRequest = 0;
+        double avgUtilProc = 0;
         for (Map.Entry<Integer, SourceStats> entry : sourceStats.entrySet()) {
             int id = entry.getKey();
             SourceStats s = entry.getValue();
@@ -77,11 +78,12 @@ public class Statistics {
             double avgServ = s.completed == 0 ? 0 : s.totalServiceTime / s.completed;
             double varWait = calculateVariance(s.waitTimes, avgWait);
             double varServ = calculateVariance(s.serviceTimes, avgServ);
+            avgSysRequest += avgSys;
 
             System.out.printf("Source-%-3d %-8d %-8d %-10.2f %-10.3f %-10.3f %-10.3f %-10.3f %-10.3f\n",
                     id, s.generated, s.rejected, pRej, avgSys, avgWait, avgServ, varWait, varServ);
         }
-
+        System.out.printf("Average time of request in system: %-10.3f\n", avgSysRequest / sourceStats.size());
         System.out.printf("%-12s %-12s %-15s %-10s\n", "Processor", "Processed", "Busy Time", "Util(%)");
         System.out.println("-".repeat(60));
 
@@ -89,8 +91,10 @@ public class Statistics {
             int id = entry.getKey();
             ProcessorStats p = entry.getValue();
             double util = simulationTime == 0 ? 0 : (p.busyTime / (double)simulationTime) * 100;
+            avgUtilProc += util;
             System.out.printf("Proc-%-7d %-12d %-15.2f %-10.2f\n", id, p.processed, p.busyTime, util);
         }
+        System.out.printf("Average utilization of processor in system: %-10.3f\n", avgUtilProc / processorStats.size());
         System.out.println("=".repeat(100));
     }
 

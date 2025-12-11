@@ -20,9 +20,9 @@ public class PostDispatcher {
             if (oldestRequest != null) {
                 requestBuffer.removeRequest(oldestRequest);
                 statistics.recordRejection(oldestRequest.getSourceId());
-
-                System.out.printf("[%d] Dispatcher REJECTED %s (Replaced by %s)\n",
-                        simulation.getCurrentTime(), oldestRequest, request);
+                if(!Main.isAutoMode) {
+                    System.out.printf("[%d] Dispatcher REJECTED %s (Replaced by %s)\n", simulation.getCurrentTime(), oldestRequest, request);
+                }
             }
             requestBuffer.addRequest(request);
 

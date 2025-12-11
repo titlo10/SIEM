@@ -32,9 +32,11 @@ public class AnalyticProcessor {
             
             int serviceTime = generateServiceTime();
             int timeToFinish = now + serviceTime;
-            
-            System.out.printf("[%d] Processor-%d START: %s (Service: %d) -> Finish at %d\n",
-                               now, id, currentRequest, serviceTime, timeToFinish);
+
+            if(!Main.isAutoMode) {
+                System.out.printf("[%d] Processor-%d START: %s (Service: %d) -> Finish at %d\n",
+                        now, id, currentRequest, serviceTime, timeToFinish);
+            }
 
             simulation.scheduleEvent(new SystemEvent(timeToFinish, EventType.TASK_COMPLETED, id));
         }
@@ -47,8 +49,9 @@ public class AnalyticProcessor {
 
         statistics.recordCompleted(currentRequest, id);
 
-        System.out.printf("[%d] Processor-%d END: %s (Total Time: %d)\n",
-                now, id, currentRequest, currentRequest.getTotalTime());
+        if(!Main.isAutoMode) {
+            System.out.printf("[%d] Processor-%d END: %s (Total Time: %d)\n", now, id, currentRequest, currentRequest.getTotalTime());
+        }
 
         currentRequest = null;
         isBusy = false;

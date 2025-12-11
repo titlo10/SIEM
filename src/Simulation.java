@@ -12,7 +12,7 @@ public class Simulation {
     private final ArrayList<Source> sources;
 
     // Constants
-    private static final int BUFFER_CAPACITY = 5;
+    private static final int BUFFER_CAPACITY = 8;
     private static final int NUM_PROCESSORS = 4;
     private static final int MIN_INTERVAL = 0;
     private static final int MAX_INTERVAL = 10;
@@ -54,16 +54,19 @@ public class Simulation {
         
         SystemEvent currentEvent = eventSet.poll();
         currentTime = currentEvent.eventTime();
-        
-        System.out.println("\n==================================================");
-        System.out.printf(">>> TIME ADVANCED TO T=%d\n", currentTime);
-        System.out.printf(">>> PROCESSING EVENT: %s (Device ID: %d)\n", 
-                          currentEvent.eventType(), currentEvent.assignedDeviceId());
-        System.out.println("==================================================");
+
+        if(!Main.isAutoMode) {
+            System.out.println("\n==================================================");
+            System.out.printf(">>> TIME ADVANCED TO T=%d\n", currentTime);
+            System.out.printf(">>> PROCESSING EVENT: %s (Device ID: %d)\n",
+                    currentEvent.eventType(), currentEvent.assignedDeviceId());
+            System.out.println("==================================================");
+        }
 
         handleEvent(currentEvent);
-        printStatus();
-
+        if(!Main.isAutoMode) {
+            printStatus();
+        }
         return true; 
     }
 
